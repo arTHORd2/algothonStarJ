@@ -3,7 +3,6 @@
 # RENAME THIS FILE WITH YOUR TEAM NAME.
 
 import numpy as np
-
 nInst = 100
 currentPos = np.zeros(nInst)
 currentTradedPerStock = []
@@ -31,6 +30,14 @@ def getMyPosition(prcSoFar):
     # nt is number of days worth of data per stock
     (nins,nt) = prcSoFar.shape
     
+    # instantiate this to what we have now 
+
+    if (nt == 1):
+        for i in range(0, nInst):
+            currentTradedPerStock[i]["numberOfStockOnHand"] = 0
+            currentTradedPerStock[i]["priceBoughtAt"] = 0
+
+    currentPos = np.array([currentTradedPerStock[x]["numberOfStockOnHand"] for x in range(0, nInst)])
     # rpos = np.array([int(x) for x in 1000 * np.random.randn(nins)])
     # currentPos += rpos
     # print("Return type is: " + str(type(currentPos)))
@@ -65,9 +72,10 @@ def getMyPosition(prcSoFar):
             currentlyHeldStock["numberOfStockOnHand"] = stocksThatExceed10k[instrumentIndex]
             continue
 
-        newPositionAfterCalculatingShortTermVolatility = getPosition_ShortTermVolatility(prcSoFar, instrumentIndex, nt)
-
-        longTermThreshhold = getPosition_LongTermThreshhold(prcSoFar, instrumentIndex, nt)
+        position = getPosition_LongTermThreshhold(prcSoFar, instrumentIndex, nt)
+        if not position:
+            position = getPosition_ShortTermVolatility(prcSoFar, instrumentIndex, nt)
+            currentPos[instrumentIndex] = position
 
     return currentPos
 
@@ -143,12 +151,15 @@ def getPosition_LongTermThreshhold(prcSoFar, curStockIndex, nt):
     newPos = 0
     averageSoFar = sum([x for x in prcSoFar[curStockIndex][0:(nt - 1)]]) / nt
     curStockPrice = prcSoFar[curStockIndex][nt - 1]
+    curMonetaryPosition = currentTradedPerStock[curStockIndex]["numberOFStockOnHand"] * curStockPrice
 
     if (curStockIndex > (1+longTermCoefficient) * averageSoFar ):
         newPos = 0
     elif  (curStockIndex < (1-longTermCoefficient) * averageSoFar):
-        newPos = 
-
+        newPos = curMonetaryPosition + (1-longTermCoefficient * averageSoFar) - curStockIndex/ curStockIndex *10000
+    else:
+        newPos = False
+    return newPos
 #calculating long term threshold
         # calculate running average price (average of prices up to present day)
 
