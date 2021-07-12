@@ -6,6 +6,8 @@ import numpy as np
 nInst = 100
 currentPos = np.zeros([])
 currentTradedPerStock = []
+for i in range(0, nInst):
+            currentTradedPerStock.append({"numberOfStockOnHand" : 0, "priceBroughtAt" : 0})
 # index = instrument
 # [
 #     {
@@ -22,20 +24,16 @@ shortTermTimeRange = 5
 bigSpikeThreshold = 15
 stockTradingVolumeBasedOnShortTermChange = 100
 longTermCoefficient = 0.05
+init = False
 
 # Dummy algorithm to demonstrate function format.
 def getMyPosition(prcSoFar):
     global currentPos
+    global init
     
-    # nt is number of days worth of data per stock
+    # nt is number of elements in a list
+    # nins is the number of lists
     (nins,nt) = prcSoFar.shape
-    
-    # instantiate this to what we have now 
-
-    if (nt == 0):
-        for i in range(0, nInst):
-            currentTradedPerStock.append({"numberOfStockOnHand" : 0, "priceBroughtAt" : 0})
-            # currentTradedPerStock[i]["priceBoughtAt"] = 0
 
     for x in range(0, nInst):
         soh = currentTradedPerStock[x]["numberOfStockOnHand"]
@@ -77,10 +75,21 @@ def getMyPosition(prcSoFar):
             continue
 
         position = getPosition_LongTermThreshhold(prcSoFar, instrumentIndex, nt)
+        print(f"IS POSITION {position}")
         if not position:
             position = getPosition_ShortTermVolatility(prcSoFar, instrumentIndex, nt)
+            print(f"HELLO {position}")
             currentPos[instrumentIndex] = position
 
+    for x in range(0, nInst):
+        print("========currentPos[x]")
+        print(currentPos[x])
+        print(prcSoFar[x][nt-1])
+        currentTradedPerStock[x]["numberOfStockOnHand"] = currentPos[x]
+        currentTradedPerStock[x]["priceBroughtAt"] = prcSoFar[x][nt - 1]
+
+    print("========")
+    print(currentPos)
     return currentPos
 
 def checkCurrentHoldingsExceed10k(prcSoFar, nt):
@@ -153,14 +162,21 @@ def getPosition_ShortTermVolatility(prcSoFar, curStockIndex, nt):
 
 def getPosition_LongTermThreshhold(prcSoFar, curStockIndex, nt):
     newPos = 0
-    averageSoFar = sum([x for x in prcSoFar[curStockIndex][0:(nt - 1)]]) / nt
+
+    sumList = []
+    print(f"printing nt {nt}")
+    for x in range(0, nt):
+        sumList.append(prcSoFar[curStockIndex][x])
+    averageSoFar = sum(sumList) / nt
+    print("avergage")
+    print(averageSoFar)
     curStockPrice = prcSoFar[curStockIndex][nt - 1]
-    curMonetaryPosition = currentTradedPerStock[curStockIndex]["numberOFStockOnHand"] * curStockPrice
+    curMonetaryPosition = currentTradedPerStock[curStockIndex]["numberOfStockOnHand"] * curStockPrice
 
     if (curStockIndex > (1+longTermCoefficient) * averageSoFar ):
         newPos = 0
     elif  (curStockIndex < (1-longTermCoefficient) * averageSoFar):
-        newPos = curMonetaryPosition + (1-longTermCoefficient * averageSoFar) - curStockIndex/ curStockIndex *10000
+        newPos = curMonetaryPosition + (1-longTermCoefficient * averageSoFar) - curStockIndex/ curStockIndex * 10000
     else:
         newPos = False
     return newPos
