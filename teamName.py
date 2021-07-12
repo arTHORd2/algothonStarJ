@@ -4,7 +4,7 @@
 
 import numpy as np
 nInst = 100
-currentPos = np.zeros(nInst)
+currentPos = np.zeros([])
 currentTradedPerStock = []
 # index = instrument
 # [
@@ -32,12 +32,16 @@ def getMyPosition(prcSoFar):
     
     # instantiate this to what we have now 
 
-    if (nt == 1):
+    if (nt == 0):
         for i in range(0, nInst):
-            currentTradedPerStock[i]["numberOfStockOnHand"] = 0
-            currentTradedPerStock[i]["priceBoughtAt"] = 0
+            currentTradedPerStock.append({"numberOfStockOnHand" : 0, "priceBroughtAt" : 0})
+            # currentTradedPerStock[i]["priceBoughtAt"] = 0
 
-    currentPos = np.array([currentTradedPerStock[x]["numberOfStockOnHand"] for x in range(0, nInst)])
+    for x in range(0, nInst):
+        soh = currentTradedPerStock[x]["numberOfStockOnHand"]
+        currentPos = np.append(currentPos, soh)
+
+    # currentPos = np.array([currentTradedPerStock[x]["numberOfStockOnHand"] for x in range(0, nInst)])
     # rpos = np.array([int(x) for x in 1000 * np.random.randn(nins)])
     # currentPos += rpos
     # print("Return type is: " + str(type(currentPos)))
