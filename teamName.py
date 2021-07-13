@@ -18,17 +18,16 @@ for i in range(0, nInst):
 
 # ]
 
-commissionRate = 0.005
+commissionRate = 0.5
 shortTermTimeRange = 10
-bigSpikeThreshold = 15
-stockTradingVolumeBasedOnShortTermChange = 100
 init = False
 
 # Changeable coefficients
-coefficient = 0.2 # TODO : change
-coefficient2Selling = 0.05 # TODO : change
-coefficientBuying = 0.01 # TODO : change
-longTermCoefficient = 0.2 # TODO : change
+coefficient = 0.2 # Higher means higher tolerance for short-term movement
+coefficient2Selling = 0.05 # Lower means you sell more
+coefficientBuying = 0.1 # Lower means we buy more
+longTermCoefficient = 0.2 # Lower means you will action long-term trades
+negativeFactor = -0.23
 
 # Dummy algorithm to demonstrate function format.
 def getMyPosition(prcSoFar):
@@ -84,7 +83,7 @@ def getMyPosition(prcSoFar):
             position = getPosition_ShortTermVolatility(prcSoFar, instrumentIndex, nt)
             # print("Short term position is: ", position)
         
-        currentPos[instrumentIndex] = -0.5 * float(position)
+        currentPos[instrumentIndex] = negativeFactor * float(position)
           
     for x in range(0, nInst):
         currentTradedPerStock[x]["numberOfStockOnHand"] = currentPos[x]
