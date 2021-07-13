@@ -18,16 +18,17 @@ for i in range(0, nInst):
 
 # ]
 
-shortTermTimeRange = 5
+commissionRate = 0.005
+shortTermTimeRange = 10
 bigSpikeThreshold = 15
 stockTradingVolumeBasedOnShortTermChange = 100
 init = False
 
 # Changeable coefficients
-coefficient = 0.05 # TODO : change
+coefficient = 0.2 # TODO : change
 coefficient2Selling = 0.05 # TODO : change
-coefficientBuying = 0.0001 # TODO : change
-longTermCoefficient = 0.05 # TODO : change
+coefficientBuying = 0.01 # TODO : change
+longTermCoefficient = 0.2 # TODO : change
 
 # Dummy algorithm to demonstrate function format.
 def getMyPosition(prcSoFar):
@@ -83,7 +84,7 @@ def getMyPosition(prcSoFar):
             position = getPosition_ShortTermVolatility(prcSoFar, instrumentIndex, nt)
             # print("Short term position is: ", position)
         
-        currentPos[instrumentIndex] = float(position)
+        currentPos[instrumentIndex] = -0.5 * float(position)
           
     for x in range(0, nInst):
         currentTradedPerStock[x]["numberOfStockOnHand"] = currentPos[x]
@@ -117,8 +118,7 @@ def getPosition_ShortTermVolatility(prcSoFar, curStockIndex, nt):
 
     newPosition = 0
 
-    if (nt < 5):
-        # first 5 days
+    if (nt < shortTermTimeRange):
         averageSoFar = sum([x for x in prcSoFar[curStockIndex][0:(nt - 1)]]) / nt
         return averageSoFar
 
@@ -126,26 +126,23 @@ def getPosition_ShortTermVolatility(prcSoFar, curStockIndex, nt):
     endIndex = nt - 1 # today index
     prevIndex = endIndex - 1 # previous day index
 
-    fiveDayAverage = sum([x for x in prcSoFar[curStockIndex][startIndex:endIndex]]) / shortTermTimeRange
+    shortTermAverage = sum([x for x in prcSoFar[curStockIndex][startIndex:endIndex]]) / shortTermTimeRange
     priceChange = prcSoFar[curStockIndex][endIndex] - prcSoFar[curStockIndex][endIndex - 1]
 
-    volatility = (priceChange / fiveDayAverage) * 100
+    volatility = (priceChange / shortTermAverage) * 100
     stockPrice = prcSoFar[curStockIndex][endIndex]
 
-    if (volatility > (coefficient * fiveDayAverage)):
+    if (volatility - commissionRate > (coefficient * shortTermAverage)):
         # only positive, and bigger
-        # sell a certain amount of the difference between price and coefficient * fiveDayAverage
+        # sell a certain amount of the difference between price and coefficient * shortTermAverage
         # irregardless of amount of stock we have on hand.
-
-        movementInPosition = (stockPrice - (coefficient * fiveDayAverage)) * coefficient2Selling
-
-        newPosition = currentTradedPerStock[curStockIndex]["numberOfStockOnHand"] - movementInPosition
-        return newPosition
-
-    elif (volatility < -(coefficient * fiveDayAverage)):
-        # buy a certain amount
-        movementInPosition = (stockPrice - (coefficient * fiveDayAverage)) * coefficientBuying
+        movementInPosition = (stockPrice - (coefficient * shortTermAverage)) * coefficientBuying
         newPosition = currentTradedPerStock[curStockIndex]["numberOfStockOnHand"] + movementInPosition
+
+    elif (volatility - commissionRate < -(coefficient * shortTermAverage)):
+        # buy a certain amount
+        movementInPosition = (stockPrice - (coefficient * shortTermAverage)) * coefficient2Selling
+        newPosition = currentTradedPerStock[curStockIndex]["numberOfStockOnHand"] - movementInPosition
 
     return newPosition
 
@@ -172,9 +169,11 @@ def getPosition_LongTermThreshhold(prcSoFar, curStockIndex, nt):
     # print("Current stock price is: ", curStockPrice)
     # print("Our current monetary position for this stock is: ", curMonetaryPosition)
     if (curStockPrice > (1+longTermCoefficient) * averageSoFar ):
-        newPos = curMonetaryPosition - ((curStockPrice - (1+longTermCoefficient * averageSoFar))/ curStockPrice) * 10000
-    elif  (curStockPrice < (1-longTermCoefficient) * averageSoFar):
         newPos = curMonetaryPosition + (((1-longTermCoefficient * averageSoFar) - curStockPrice)/ curStockPrice) * 10000
+
+    elif  (curStockPrice < (1-longTermCoefficient) * averageSoFar):
+        newPos = curMonetaryPosition - ((curStockPrice - (1+longTermCoefficient * averageSoFar))/ curStockPrice) * 10000
+
     else:
         newPos = False
     return newPos
