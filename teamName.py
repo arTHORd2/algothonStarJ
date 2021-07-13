@@ -3,7 +3,6 @@
 # RENAME THIS FILE WITH YOUR TEAM NAME.
 
 import numpy as np
-import math
 nInst = 100
 currentPos = []
 currentTradedPerStock = []
