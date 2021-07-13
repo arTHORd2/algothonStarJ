@@ -18,14 +18,16 @@ for i in range(0, nInst):
 
 # ]
 
-coefficient = 0 # TODO : change
-coefficient2Selling = 0 # TODO : change
-coefficientBuying = 0 # TODO : change
 shortTermTimeRange = 5
 bigSpikeThreshold = 15
 stockTradingVolumeBasedOnShortTermChange = 100
-longTermCoefficient = 0
 init = False
+
+# Changeable coefficients
+coefficient = 0.05 # TODO : change
+coefficient2Selling = 0.05 # TODO : change
+coefficientBuying = 0.0001 # TODO : change
+longTermCoefficient = 0.05 # TODO : change
 
 # Dummy algorithm to demonstrate function format.
 def getMyPosition(prcSoFar):
@@ -64,10 +66,10 @@ def getMyPosition(prcSoFar):
 
     stocksThatExceed10k = checkCurrentHoldingsExceed10k(prcSoFar, nt)
     # {stock index : position}
-    # TODO : change currentTradedPerStock after finding out some stocks need to be sold
     
     # calculating short term threshold
     for instrumentIndex in range(0, nInst):
+        # print("=====")
         currentlyHeldStock = currentTradedPerStock[instrumentIndex]
 
         # skip stock if at 10k
@@ -76,14 +78,16 @@ def getMyPosition(prcSoFar):
             continue
 
         position = getPosition_LongTermThreshhold(prcSoFar, instrumentIndex, nt)
+        # print("Long term position is: ", position)
         if not position:
             position = getPosition_ShortTermVolatility(prcSoFar, instrumentIndex, nt)
-            currentPos[instrumentIndex] = int(position)
-
+            # print("Short term position is: ", position)
+        
+        currentPos[instrumentIndex] = float(position)
+          
     for x in range(0, nInst):
         currentTradedPerStock[x]["numberOfStockOnHand"] = currentPos[x]
         currentTradedPerStock[x]["priceBroughtAt"] = prcSoFar[x][nt - 1]
-
     return np.array(currentPos)
 
 def checkCurrentHoldingsExceed10k(prcSoFar, nt):
@@ -165,11 +169,12 @@ def getPosition_LongTermThreshhold(prcSoFar, curStockIndex, nt):
 
     curStockPrice = prcSoFar[curStockIndex][nt - 1]
     curMonetaryPosition = currentTradedPerStock[curStockIndex]["numberOfStockOnHand"] * curStockPrice
-
+    # print("Current stock price is: ", curStockPrice)
+    # print("Our current monetary position for this stock is: ", curMonetaryPosition)
     if (curStockPrice > (1+longTermCoefficient) * averageSoFar ):
-        newPos = 0
+        newPos = curMonetaryPosition - ((curStockPrice - (1+longTermCoefficient * averageSoFar))/ curStockPrice) * 10000
     elif  (curStockPrice < (1-longTermCoefficient) * averageSoFar):
-        newPos = curMonetaryPosition + (1-longTermCoefficient * averageSoFar) - curStockPrice/ curStockPrice * 10000
+        newPos = curMonetaryPosition + (((1-longTermCoefficient * averageSoFar) - curStockPrice)/ curStockPrice) * 10000
     else:
         newPos = False
     return newPos
