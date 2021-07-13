@@ -3,8 +3,9 @@
 # RENAME THIS FILE WITH YOUR TEAM NAME.
 
 import numpy as np
+import math
 nInst = 100
-currentPos = np.zeros([])
+currentPos = []
 currentTradedPerStock = []
 for i in range(0, nInst):
             currentTradedPerStock.append({"numberOfStockOnHand" : 0, "priceBroughtAt" : 0})
@@ -17,27 +18,27 @@ for i in range(0, nInst):
 
 # ]
 
-coefficient = 0.5 # TODO : change
-coefficient2Selling = 0.5 # TODO : change
-coefficientBuying = 0.5 # TODO : change
+coefficient = 0 # TODO : change
+coefficient2Selling = 0 # TODO : change
+coefficientBuying = 0 # TODO : change
 shortTermTimeRange = 5
 bigSpikeThreshold = 15
 stockTradingVolumeBasedOnShortTermChange = 100
-longTermCoefficient = 0.05
+longTermCoefficient = 0
 init = False
 
 # Dummy algorithm to demonstrate function format.
 def getMyPosition(prcSoFar):
     global currentPos
     global init
-    
+    currentPos = []
     # nt is number of elements in a list
     # nins is the number of lists
     (nins,nt) = prcSoFar.shape
 
     for x in range(0, nInst):
         soh = currentTradedPerStock[x]["numberOfStockOnHand"]
-        currentPos = np.append(currentPos, soh)
+        currentPos.append(soh)
 
     # currentPos = np.array([currentTradedPerStock[x]["numberOfStockOnHand"] for x in range(0, nInst)])
     # rpos = np.array([int(x) for x in 1000 * np.random.randn(nins)])
@@ -66,31 +67,24 @@ def getMyPosition(prcSoFar):
     # TODO : change currentTradedPerStock after finding out some stocks need to be sold
     
     # calculating short term threshold
-    for currentlyHeldStock in currentTradedPerStock:
-        instrumentIndex = currentTradedPerStock.index(currentlyHeldStock)
-        
+    for instrumentIndex in range(0, nInst):
+        currentlyHeldStock = currentTradedPerStock[instrumentIndex]
+
         # skip stock if at 10k
         if instrumentIndex in stocksThatExceed10k.keys():
             currentlyHeldStock["numberOfStockOnHand"] = stocksThatExceed10k[instrumentIndex]
             continue
 
         position = getPosition_LongTermThreshhold(prcSoFar, instrumentIndex, nt)
-        print(f"IS POSITION {position}")
         if not position:
             position = getPosition_ShortTermVolatility(prcSoFar, instrumentIndex, nt)
-            print(f"HELLO {position}")
-            currentPos[instrumentIndex] = position
+            currentPos[instrumentIndex] = int(position)
 
     for x in range(0, nInst):
-        print("========currentPos[x]")
-        print(currentPos[x])
-        print(prcSoFar[x][nt-1])
         currentTradedPerStock[x]["numberOfStockOnHand"] = currentPos[x]
         currentTradedPerStock[x]["priceBroughtAt"] = prcSoFar[x][nt - 1]
 
-    print("========")
-    print(currentPos)
-    return currentPos
+    return np.array(currentPos)
 
 def checkCurrentHoldingsExceed10k(prcSoFar, nt):
     # Check our current days holdings
@@ -164,15 +158,14 @@ def getPosition_LongTermThreshhold(prcSoFar, curStockIndex, nt):
     newPos = 0
 
     sumList = []
-    print(f"printing nt {nt}")
+
     for x in range(0, nt):
         sumList.append(prcSoFar[curStockIndex][x])
     averageSoFar = sum(sumList) / nt
-    print("avergage")
-    print(averageSoFar)
+
     curStockPrice = prcSoFar[curStockIndex][nt - 1]
     curMonetaryPosition = currentTradedPerStock[curStockIndex]["numberOfStockOnHand"] * curStockPrice
-    print("The currnet monetary position for this stock is: ", curMonetaryPosition)
+
     if (curStockPrice > (1+longTermCoefficient) * averageSoFar ):
         newPos = 0
     elif  (curStockPrice < (1-longTermCoefficient) * averageSoFar):
