@@ -172,11 +172,11 @@ def getPosition_LongTermThreshhold(prcSoFar, curStockIndex, nt):
     print(averageSoFar)
     curStockPrice = prcSoFar[curStockIndex][nt - 1]
     curMonetaryPosition = currentTradedPerStock[curStockIndex]["numberOfStockOnHand"] * curStockPrice
-
-    if (curStockIndex > (1+longTermCoefficient) * averageSoFar ):
+    print("The currnet monetary position for this stock is: ", curMonetaryPosition)
+    if (curStockPrice > (1+longTermCoefficient) * averageSoFar ):
         newPos = 0
-    elif  (curStockIndex < (1-longTermCoefficient) * averageSoFar):
-        newPos = curMonetaryPosition + (1-longTermCoefficient * averageSoFar) - curStockIndex/ curStockIndex * 10000
+    elif  (curStockPrice < (1-longTermCoefficient) * averageSoFar):
+        newPos = curMonetaryPosition + (1-longTermCoefficient * averageSoFar) - curStockPrice/ curStockPrice * 10000
     else:
         newPos = False
     return newPos
